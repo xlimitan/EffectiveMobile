@@ -1,13 +1,56 @@
 version: '3.8'
 services:
-  db:
-    image: postgres:15
-    container_name: effective_mobile_db
+  bank-app:
+    build: .
+    container_name: bank_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
-      POSTGRES_DB: effective_mobile
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bank_db
+      SPRING_DATASOURCE_USERNAME: bank_user
+      SPRING_DATASOURCE_PASSWORD: bank_password
+    networks:
+      - bank_network
+
+  postgres:
+    image: postgres:15
+    container_name: bank_postgres
+    environment:
+      POSTGRES_DB: bank_db
+      POSTGRES_USER: bank_user
+      POSTGRES_PASSWORD: bank_password
+    # Уберите или измените проброс порта, если на хосте уже работает Postgres
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bank_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bank_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bank_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bank.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8081:80"
+    depends_on:
+      - postgres
+    networks:
+      - bank_network
+
+volumes:
+  pgdata:
+
+networks:
+  bank_network:
+    driver: bridge

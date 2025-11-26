@@ -1,0 +1,23 @@
+package com.example.repository;
+
+import com.example.entity.Transaction;
+import com.example.entity.TransactionStatus;
+import jakarta.annotation.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.UUID;
+
+@Repository
+public interface TransactionRepository extends JpaRepository<Transaction, UUID> {
+    Page<Transaction> findAll(@Nullable Pageable pageable);
+    @Query("SELECT t FROM Transaction t WHERE t.fromCard.owner.id = :userId")
+    Page<Transaction> findAllByUserId(@Param("userId") UUID id, Pageable pageable);
+    @Query("SELECT t from Transaction t WHERE t.fromCard.id = :cardId")
+    Page<Transaction> findAllByCardId(@Param("cardId") UUID id, Pageable pageable);
+    Page<Transaction> findAllByStatus(TransactionStatus transactionStatus, Pageable pageable);
+}
